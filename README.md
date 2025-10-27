@@ -1,6 +1,13 @@
 impress.js
 ============
 
+# This is not compatible with the original!!!
+
+This version of impress.js is intended to be used with
+[impressive](https://github.com/jspkay/impressive.git) and some substantial
+modifications have been done so that **no compatability with the original
+impress.js** is guaranteed!!!
+
 [![CircleCI](https://circleci.com/gh/impress/impress.js.svg?style=svg)](https://circleci.com/gh/impress/impress.js)
 
 It's a presentation framework based on the power of CSS3 transforms and
