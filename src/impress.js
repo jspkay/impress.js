@@ -238,6 +238,9 @@
         // Root presentation elements
         var root = lib.util.byId( rootId );
         var canvas = document.createElement( "div" );
+	canvas.style.height = "100%";
+	canvas.style.width = "100%";
+
 
         var initialized = false;
 
@@ -307,7 +310,7 @@
 
             css( el, {
                 position: "absolute",
-                transform: "translate(-50%,-50%)" +
+                transform: // "translate(-50%,-50%)" +
                            translate( step.translate ) +
                            rotate( step.rotate ) +
                            scale( step.scale ),
@@ -372,15 +375,17 @@
 
             var rootStyles = {
                 position: "absolute",
-                transformOrigin: "top left",
+                // transformOrigin: "top left",
                 transition: "all 0s ease-in-out",
                 transformStyle: "preserve-3d"
+		width: "100%",
+		height: "100%",
             };
 
             css( root, rootStyles );
             css( root, {
-                top: "50%",
-                left: "50%",
+                // top: "50%",
+                // left: "50%",
                 perspective: ( config.perspective / windowScale ) + "px",
                 transform: scale( windowScale )
             } );
@@ -493,17 +498,17 @@
             // Compute target state of the canvas based on given step
             var target = {
                 rotate: {
-                    x: -step.rotate.x,
-                    y: -step.rotate.y,
-                    z: -step.rotate.z,
+                    x: step.rotate.x,
+                    y: step.rotate.y,
+                    z: step.rotate.z,
                     order: step.rotate.order
                 },
                 translate: {
-                    x: -step.translate.x,
-                    y: -step.translate.y,
-                    z: -step.translate.z
+                    x: step.translate.x,
+                    y: step.translate.y,
+                    z: step.translate.z
                 },
-                scale: 1 / step.scale
+                scale: step.scale
             };
 
             // Check if the transition is zooming in or not.
