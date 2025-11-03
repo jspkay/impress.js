@@ -240,6 +240,9 @@
         // Root presentation elements
         var root = lib.util.byId( rootId );
         var canvas = document.createElement( "div" );
+	canvas.style.height = "100%";
+	canvas.style.width = "100%";
+
 
         var initialized = false;
 
@@ -309,7 +312,7 @@
 
             css( el, {
                 position: "absolute",
-                transform: "translate(-50%,-50%)" +
+                transform: // "translate(-50%,-50%)" +
                            translate( step.translate ) +
                            rotate( step.rotate ) +
                            scale( step.scale ),
@@ -374,15 +377,17 @@
 
             var rootStyles = {
                 position: "absolute",
-                transformOrigin: "top left",
+                // transformOrigin: "top left",
                 transition: "all 0s ease-in-out",
-                transformStyle: "preserve-3d"
+                transformStyle: "preserve-3d",
+		width: "100%",
+		height: "100%",
             };
 
             css( root, rootStyles );
             css( root, {
-                top: "50%",
-                left: "50%",
+                // top: "50%",
+                // left: "50%",
                 perspective: ( config.perspective / windowScale ) + "px",
                 transform: scale( windowScale )
             } );
@@ -495,17 +500,17 @@
             // Compute target state of the canvas based on given step
             var target = {
                 rotate: {
-                    x: -step.rotate.x,
-                    y: -step.rotate.y,
-                    z: -step.rotate.z,
+                    x: step.rotate.x,
+                    y: step.rotate.y,
+                    z: step.rotate.z,
                     order: step.rotate.order
                 },
                 translate: {
-                    x: -step.translate.x,
-                    y: -step.translate.y,
-                    z: -step.translate.z
+                    x: step.translate.x,
+                    y: step.translate.y,
+                    z: step.translate.z
                 },
-                scale: 1 / step.scale
+                scale: step.scale
             };
 
             // Check if the transition is zooming in or not.
@@ -757,19 +762,61 @@
         lib.gc.addEventListener( root, "impress:init", function() {
 
             // STEP CLASSES
-            steps.forEach( function( step ) {
-                step.classList.add( "future" );
-            } );
+	    let currentStep = lib.util.getElementFromHash();
+	    let cidx = steps.indexOf( currentStep );
+
+	    let i;
+	    for(i = 0; i<cidx; i++){
+                steps[i].classList.add( "past" );
+	        let animClass = steps[i].getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.add("past");
+		  }
+		);
+	    }
+	    steps[i].classList.add("present");
+	    let animClass = steps[i].getAttribute("id");
+	    document.querySelectorAll("."+animClass).forEach( 
+	      (e) => {
+		e.classList.add("present");
+	      }
+	    );
+
+	    for(i; i<steps.length; i++){
+                steps[i].classList.add( "future" );
+	        let animClass = steps[i].getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.add("future");
+		  }
+		);
+            }
 
             lib.gc.addEventListener( root, "impress:stepenter", function( event ) {
                 event.target.classList.remove( "past" );
                 event.target.classList.remove( "future" );
                 event.target.classList.add( "present" );
+	        let animClass = event.target.getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.remove("future");
+		    e.classList.remove("past");
+		    e.classList.add("present");
+		  }
+		);
             }, false );
 
             lib.gc.addEventListener( root, "impress:stepleave", function( event ) {
                 event.target.classList.remove( "present" );
                 event.target.classList.add( "past" );
+	        let animClass = event.target.getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.remove("present");
+		    e.classList.add("past");
+		  }
+		);
             }, false );
 
         }, false );
@@ -2426,6 +2473,79 @@
     impress.addPreStepLeavePlugin( goto );
 
 } )( document, window );
+
+
+/**
+ * Bookmark Plugin
+ *
+ * The bookmark plugin consists of
+ *   a pre-init plugin,
+ *   a keyup listener, and
+ *   a pre-stepleave plugin.
+ *
+ * The pre-init plugin surveys all step divs to set up bookmark keybindings.
+ * The pre-stepleave plugin alters the destination when a bookmark hotkey is pressed.
+ *
+ * Example:
+ *
+ *       <!-- data-bookmark-key-list allows an "inbound" style of non-linear navigation. -->
+ *       <div id="..." class="step" data-bookmark-key-list="Digit1 KeyA 1 2 3 a b c">
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values for a table
+ * of what strings to use for each key. Both .key and .code styles are recognized.
+ *
+ * It's up to the HTML author to avoid reserved hotkeys H, B, P, ? etc.
+ *
+ * Copyright 2016-2017 Henrik Ingo (@henrikingo)
+ * Released under the MIT license.
+ */
+/* global document, impress */
+
+( function( document ) {
+    "use strict";
+    var hotkeys = {};
+    function hotkeyDest( event ) {
+	return ( hotkeys.hasOwnProperty( event.key )  ? hotkeys[ event.key ] :
+		 hotkeys.hasOwnProperty( event.code ) ? hotkeys[ event.code ] : null ); }
+
+    // In pre-init phase, build a map of bookmark hotkey to div id, by reviewing all steps
+    impress.addPreInitPlugin( function( root, api ) {
+	root.querySelectorAll( ".step" ).forEach( function( div ) {
+            if ( div.dataset.bookmarkKeyList !== undefined && div.id !== undefined ) {
+		div.dataset.bookmarkKeyList.split( " " ).forEach( ( k ) => {
+		    if ( hotkeys.hasOwnProperty( k ) ) {
+			hotkeys[ k ].push( div.id );
+		    } else { hotkeys[ k ] = [ div.id ]; } } ); } } );
+
+	api.lib.gc.addEventListener( document, "keyup", function( event ) {
+	    if ( hotkeyDest( event ) !== null ) {
+		event.stopImmediatePropagation();
+		api.next( event );
+
+		// Event.preventDefault();
+	    }
+	} );
+    } );
+
+    // In pre-stepleave phase, match a hotkey and reset destination accordingly.
+    impress.addPreStepLeavePlugin( function( event ) {
+
+	// Window.console.log(`bookmark: running as PreStepLeavePlugin; event=`);
+	// window.console.log(event)
+        if ( ( !event || !event.origEvent ) ) { return; }
+	var dest = hotkeyDest( event.origEvent );
+        if ( dest ) {
+
+	    // Window.console.log(`bookmark: recognizing hotkey ${event.code} goes to ${dest}`)
+            var newTarget = document.getElementById( dest[ 0 ] ); // jshint ignore:line
+            if ( newTarget ) {
+                event.detail.next = newTarget;
+		dest.push( dest.shift() ); // Repeated hotkey presses cycle through each dest.
+            }
+        }
+    } );
+
+} )( document );
 
 
 /**

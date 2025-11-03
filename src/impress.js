@@ -377,7 +377,7 @@
                 position: "absolute",
                 // transformOrigin: "top left",
                 transition: "all 0s ease-in-out",
-                transformStyle: "preserve-3d"
+                transformStyle: "preserve-3d",
 		width: "100%",
 		height: "100%",
             };
@@ -760,19 +760,61 @@
         lib.gc.addEventListener( root, "impress:init", function() {
 
             // STEP CLASSES
-            steps.forEach( function( step ) {
-                step.classList.add( "future" );
-            } );
+	    let currentStep = lib.util.getElementFromHash();
+	    let cidx = steps.indexOf( currentStep );
+
+	    let i;
+	    for(i = 0; i<cidx; i++){
+                steps[i].classList.add( "past" );
+	        let animClass = steps[i].getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.add("past");
+		  }
+		);
+	    }
+	    steps[i].classList.add("present");
+	    let animClass = steps[i].getAttribute("id");
+	    document.querySelectorAll("."+animClass).forEach( 
+	      (e) => {
+		e.classList.add("present");
+	      }
+	    );
+
+	    for(i; i<steps.length; i++){
+                steps[i].classList.add( "future" );
+	        let animClass = steps[i].getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.add("future");
+		  }
+		);
+            }
 
             lib.gc.addEventListener( root, "impress:stepenter", function( event ) {
                 event.target.classList.remove( "past" );
                 event.target.classList.remove( "future" );
                 event.target.classList.add( "present" );
+	        let animClass = event.target.getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.remove("future");
+		    e.classList.remove("past");
+		    e.classList.add("present");
+		  }
+		);
             }, false );
 
             lib.gc.addEventListener( root, "impress:stepleave", function( event ) {
                 event.target.classList.remove( "present" );
                 event.target.classList.add( "past" );
+	        let animClass = event.target.getAttribute("id");
+	        document.querySelectorAll("."+animClass).forEach( 
+		  (e) => {
+		    e.classList.remove("present");
+		    e.classList.add("past");
+		  }
+		);
             }, false );
 
         }, false );
